@@ -10,6 +10,7 @@ interface Project {
   html_url: string
   homepage?: string
   language: string
+  image: string
 }
 
 export default function Projects() {
@@ -20,24 +21,29 @@ export default function Projects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch("https://api.github.com/orgs/aerhedai/repos", {
-          headers: {
-          },
-        })
+        const res = await fetch("https://api.github.com/orgs/aerhedai/repos")
 
         if (!res.ok) throw new Error("Failed to fetch repositories")
         const data = await res.json()
 
-        // Optional: Filter/fix descriptions
         const filtered = data
-          .filter((repo: any) => !repo.fork) // Skip forks
-          .map((repo: any) => ({
-            name: repo.name,
-            description: repo.description || "No description provided.",
-            html_url: repo.html_url,
-            homepage: repo.homepage,
-            language: repo.language,
-          }))
+          .filter((repo: any) => !repo.fork)
+          .map((repo: any) => {
+            let imageName = `${repo.name}.png`
+            if (repo.name === ".github") {
+              imageName = "github.png"
+            }
+            const imagePath = `/images/projects/${imageName}`
+
+            return {
+              name: repo.name,
+              description: repo.description || "No description provided.",
+              html_url: repo.html_url,
+              homepage: repo.homepage,
+              language: repo.language,
+              image: imagePath,
+            }
+          })
 
         setProjects(filtered)
       } catch (err) {
@@ -61,7 +67,7 @@ export default function Projects() {
             Featured Projects
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            A showcase of real GitHub repositories under our organization.
+            A showcase of real GitHub repositories under our organisation.
           </p>
         </motion.div>
 
@@ -77,8 +83,12 @@ export default function Projects() {
             >
               <div className="relative overflow-hidden">
                 <img
-                  src="/placeholder.svg?height=300&width=500"
+                  src={project.image}
                   alt={project.name}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = "/placeholder.svg?height=300&width=500"
+                  }}
                   className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
@@ -118,7 +128,7 @@ export default function Projects() {
                       className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
                     >
                       <ExternalLink className="w-5 h-5" />
-                      Demo
+                      Website
                     </motion.a>
                   )}
                 </div>
