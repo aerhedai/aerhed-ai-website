@@ -1,41 +1,52 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { useInView } from "framer-motion"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { motion, useInView } from "framer-motion"
 import { ExternalLink, Github } from "lucide-react"
+
+interface Project {
+  name: string
+  description: string
+  html_url: string
+  homepage?: string
+  language: string
+}
 
 export default function Projects() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const [projects, setProjects] = useState<Project[]>([])
 
-  const projects = [
-    {
-      title: "AI Chat Assistant",
-      description: "An intelligent conversational AI built with advanced natural language processing capabilities.",
-      tech: ["Python", "TensorFlow", "React", "Node.js"],
-      image: "/placeholder.svg?height=300&width=500",
-      github: "#",
-      demo: "#",
-    },
-    {
-      title: "Computer Vision Platform",
-      description:
-        "Real-time object detection and image analysis platform using state-of-the-art deep learning models.",
-      tech: ["PyTorch", "OpenCV", "FastAPI", "Docker"],
-      image: "/placeholder.svg?height=300&width=500",
-      github: "#",
-      demo: "#",
-    },
-    {
-      title: "Predictive Analytics Engine",
-      description: "Machine learning system for predictive analytics and data-driven decision making.",
-      tech: ["Scikit-learn", "Pandas", "Flask", "PostgreSQL"],
-      image: "/placeholder.svg?height=300&width=500",
-      github: "#",
-      demo: "#",
-    },
-  ]
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch("https://api.github.com/orgs/aerhedai/repos", {
+          headers: {
+          },
+        })
+
+        if (!res.ok) throw new Error("Failed to fetch repositories")
+        const data = await res.json()
+
+        // Optional: Filter/fix descriptions
+        const filtered = data
+          .filter((repo: any) => !repo.fork) // Skip forks
+          .map((repo: any) => ({
+            name: repo.name,
+            description: repo.description || "No description provided.",
+            html_url: repo.html_url,
+            homepage: repo.homepage,
+            language: repo.language,
+          }))
+
+        setProjects(filtered)
+      } catch (err) {
+        console.error("Error fetching projects:", err)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   return (
     <section id="projects" className="py-20" ref={ref}>
@@ -50,15 +61,14 @@ export default function Projects() {
             Featured Projects
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Explore our portfolio of innovative AI projects that demonstrate our expertise in machine learning, computer
-            vision, and intelligent automation.
+            A showcase of real GitHub repositories under our organization.
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project, index) => (
             <motion.div
-              key={project.title}
+              key={project.name}
               initial={{ opacity: 0, y: 50 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
@@ -67,28 +77,30 @@ export default function Projects() {
             >
               <div className="relative overflow-hidden">
                 <img
-                  src={project.image || "/placeholder.svg"}
-                  alt={project.title}
+                  src="/placeholder.svg?height=300&width=500"
+                  alt={project.name}
                   className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
               </div>
 
               <div className="p-6">
-                <h3 className="text-2xl font-semibold mb-3 text-white">{project.title}</h3>
+                <h3 className="text-2xl font-semibold mb-3 text-white">{project.name}</h3>
                 <p className="text-gray-300 mb-4">{project.description}</p>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {project.tech.map((tech) => (
-                    <span key={tech} className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
-                      {tech}
+                  {project.language && (
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                      {project.language}
                     </span>
-                  ))}
+                  )}
                 </div>
 
                 <div className="flex gap-4">
                   <motion.a
-                    href={project.github}
+                    href={project.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
@@ -96,15 +108,19 @@ export default function Projects() {
                     <Github className="w-5 h-5" />
                     Code
                   </motion.a>
-                  <motion.a
-                    href={project.demo}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    <ExternalLink className="w-5 h-5" />
-                    Demo
-                  </motion.a>
+                  {project.homepage && (
+                    <motion.a
+                      href={project.homepage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <ExternalLink className="w-5 h-5" />
+                      Demo
+                    </motion.a>
+                  )}
                 </div>
               </div>
             </motion.div>
