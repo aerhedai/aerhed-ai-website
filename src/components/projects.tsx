@@ -87,7 +87,7 @@ export default function Projects() {
                   alt={project.name}
                   onError={(e) => {
                     e.currentTarget.onerror = null
-                    e.currentTarget.src = "/placeholder.svg?height=300&width=500"
+                    e.currentTarget.style.display = "none"
                   }}
                   className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
                 />
